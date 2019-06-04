@@ -1,4 +1,3 @@
-import json
 from rest_framework import serializers
 
 
@@ -9,21 +8,17 @@ class DynamicFieldsMixin(object):
     """
 
     def __init__(self, *args, **kwargs):
-        self.dynamic_fields = kwargs.pop('fields', None)
-        self.dynamic_exclude = kwargs.pop('exclude', None)
+        fields = kwargs.pop('fields', None)
+        exclude = kwargs.pop('exclude', None)
+
         error_message = (
             "You can't enable 'fields' AND 'exclude' at the same time"
         )
 
-        if self.dynamic_fields and self.dynamic_exclude:
+        if fields and exclude:
             raise Exception(error_message)
 
         super(DynamicFieldsMixin, self).__init__(*args, **kwargs)
-
-        fields, exclude = self.get_dynamic_fields()
-
-        if fields and exclude:
-            raise Exception(error_message)
 
         if fields is not None:
             field_names = self.get_dynamic_field_names(fields)
@@ -39,18 +34,6 @@ class DynamicFieldsMixin(object):
             for field_name in exclude:
                 self.fields.pop(field_name, None)
 
-    def get_from_profile(self):
-        profile = self.context['request'].query_params['profile']
-        return self.Meta.profiles[profile], tuple()
-
-    def get_from_structure(self):
-        return json.loads(
-            self.context['request'].query_params['structure']
-        ), None
-
-    def get_from_context(self):
-        return self.context.pop('fields'), self.context.pop('exclude')
-
     def get_dynamic_field_names(self, fields):
         return [
             field_entry.keys()[0]
@@ -60,25 +43,8 @@ class DynamicFieldsMixin(object):
             for field_entry in fields
         ]
 
-    def get_dynamic_fields(self):
-        try:
-            return self.get_from_structure()
-        except (KeyError, ValueError):
-            pass
-
-        try:
-            return self.get_from_profile()
-        except (KeyError, AttributeError):
-            pass
-
-        try:
-            return self.get_from_context()
-        except KeyError:
-            pass
-
-        return self.dynamic_fields, self.dynamic_exclude
-
     def distribute_fields(self, fields, field_names):
+        # recursively call this method on every field?
         inherit = ('instance', 'data', 'partial', 'context',  # 'many',
                    'read_only', 'write_only', 'required', 'default',
                    'source', 'initial', 'label', 'help_text', 'style',
