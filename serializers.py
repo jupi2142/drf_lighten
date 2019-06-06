@@ -28,11 +28,16 @@ class DynamicFieldsMixin(object):
             for field_name in existing - subset:
                 self.fields.pop(field_name, None)
 
-            self.distribute_fields(fields, field_names)
+            for field_entry in fields:
+                if isinstance(field_entry, dict):
+                    self.distribute_dictionary(field_entry, 'fields')
 
         elif exclude is not None:
-            for field_name in exclude:
-                self.fields.pop(field_name, None)
+            for field_entry in exclude:
+                if isinstance(field_entry, dict):
+                    self.distribute_dictionary(field_entry, 'exclude')
+                else:
+                    self.fields.pop(field_entry, None)
 
     def get_dynamic_field_names(self, fields):
         return [
@@ -43,37 +48,31 @@ class DynamicFieldsMixin(object):
             for field_entry in fields
         ]
 
-    def distribute_fields(self, fields, field_names):
-        # recursively call this method on every field?
+    def get_field_and_kwargs(self, field_name):
+        field = self.fields[field_name]
+        many = isinstance(field, serializers.ListSerializer)
+        field = getattr(field, 'child', field)
+
         inherit = ('instance', 'data', 'partial', 'context',  # 'many',
                    'read_only', 'write_only', 'required', 'default',
                    'source', 'initial', 'label', 'help_text', 'style',
                    'error_messages', 'validators', 'allow_null')
+        kwargs = {
+            attribute_name: getattr(field, attribute_name)
+            for attribute_name in inherit
+        }
+        kwargs['many'] = many
 
-        current_fields = set(self.fields.keys())
-        for field_name, field_entry in zip(field_names, fields):
-            if field_name not in current_fields:
-                continue
+        if kwargs['source'] in ['', field_name]:
+            kwargs.pop('source')
 
-            if not isinstance(field_entry, dict):
-                continue
+        return field, kwargs
 
-            field = self.fields[field_name]
-            many = isinstance(field, serializers.ListSerializer)
-            field = field.child if many else field
+    def pass_down_structure(self, field_entry, arg_name):
+        if not field_entry.keys():
+            return
 
-            if not isinstance(field, DynamicFieldsMixin):
-                continue
-
-            old_data = {
-                attribute_name: getattr(field, attribute_name)
-                for attribute_name in inherit
-            }
-
-            if old_data['source'] in ['', field_name]:
-                old_data.pop('source')
-
-            self.fields[field_name] = field.__class__(
-                many=many,
-                fields=field_entry[field_name],
-                **old_data)
+        field_name = field_entry.keys().pop()
+        field, kwargs = self.get_field_and_kwargs(field_name)
+        kwargs[arg_name] = field_entry[field_name]
+        self.fields[field_name] = field.__class__(**kwargs)
