@@ -92,5 +92,7 @@ class ProfileViewSet(DynamicStructureMixin, viewsets.ModelViewSet):
 ## Configuration
 If you want to use different query params than the ones provided, you can go to your django project's settings and do that
 
+```python
 DRF_LIGHTEN_INCLUDE = 'fields'
 DRF_LIGHTEN_EXCLUDE = 'exclude'
+```
