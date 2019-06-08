@@ -1,17 +1,20 @@
 import json
+from django.conf import settings
 
 
 class DynamicStructureMixin(object):
     def get_serializer(self, *args, **kwargs):
         try:
-            structure = self.request.query_params['structure']
+            query_param = getattr(settings, 'DRF_LIGHTEN_INCLUDE', 'fields')
+            structure = self.request.query_params[query_param]
             kwargs['fields'] = json.loads(structure)
         except (KeyError, ValueError, TypeError):
             pass
 
         try:
-            anti_structure = self.request.query_params['anti_structure']
-            kwargs['exclude'] = json.loads(anti_structure)
+            query_param = getattr(settings, 'DRF_LIGHTEN_EXCLUDE', 'exclude')
+            structure = self.request.query_params[query_param]
+            kwargs['exclude'] = json.loads(structure)
         except (KeyError, ValueError, TypeError):
             pass
 
