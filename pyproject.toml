@@ -7,4 +7,4 @@ module = "drf_lighten"
 author = "Henock Tesfaye"
 author-email = "jupiter.jupiter1@gmail.com"
 classifiers = ["License :: OSI Approved :: MIT License"]
-description-file = "drf_lighten/readme.md"
+description-file = "readme.md"
