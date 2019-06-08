@@ -1,16 +1,16 @@
 # DRF Lighten
 
-##Purpose
+## Purpose
 Even if we cal the same end point at multiple places, the information we want
 from the response varies greatly. DRF Lighten makes it possible to specify and
 get only the data you want.
 
 
-##Installation
+## Installation
 pip install -U drf_lighten
 
 
-##Usage
+## Usage
 ```python
 # serializers.py
 from app import models
@@ -48,7 +48,7 @@ class ProfileViewSet(DynamicStructureMixin, viewsets.ModelViewSet):
 
 ```
 
-##Examples
+## Examples
 https://localhost:8000/profiles/
 ```json
 [
@@ -89,7 +89,7 @@ https://localhost:8000/profiles/?fields=["url", "picture", {"user": ["url", "use
 ```
 
 
-##Configuration
+## Configuration
 If you want to use different query params than the ones provided, you can go to your django project's settings and do that
 
 DRF_LIGHTEN_INCLUDE = 'fields'
