@@ -49,7 +49,7 @@ class ProfileViewSet(DynamicStructureMixin, viewsets.ModelViewSet):
 ```
 
 ## Examples
-https://localhost:8000/profiles/
+`https://localhost:8000/profiles/`
 ```json
 [
   {
@@ -74,7 +74,7 @@ https://localhost:8000/profiles/
 ]
 ```
 
-https://localhost:8000/profiles/?fields=["url", "picture", {"user": ["url", "username"]}]
+`https://localhost:8000/profiles/?fields=["url", "picture", {"user": ["url", "username"]}]`
 ```json
 [
   {
