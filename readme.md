@@ -7,7 +7,7 @@ get only the data you want.
 
 
 ## Installation
-pip install -U drf_lighten
+`pip install -U drf_lighten`
 
 
 ## Usage
