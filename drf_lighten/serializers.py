@@ -30,12 +30,12 @@ class DynamicFieldsMixin(object):
 
             for field_entry in fields:
                 if isinstance(field_entry, dict):
-                    self.distribute_dictionary(field_entry, 'fields')
+                    self.pass_down_structure(field_entry, 'fields')
 
         elif exclude is not None:
             for field_entry in exclude:
                 if isinstance(field_entry, dict):
-                    self.distribute_dictionary(field_entry, 'exclude')
+                    self.pass_down_structure(field_entry, 'exclude')
                 else:
                     self.fields.pop(field_entry, None)
 
@@ -76,3 +76,4 @@ class DynamicFieldsMixin(object):
         field, kwargs = self.get_field_and_kwargs(field_name)
         kwargs[arg_name] = field_entry[field_name]
         self.fields[field_name] = field.__class__(**kwargs)
+
