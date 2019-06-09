@@ -1,11 +1,8 @@
 from rest_framework import serializers
+from operator import and_, sub
 
 
 class DynamicFieldsMixin(object):
-    """
-    A ModelSerializer that takes additional `fields` and `exclude` arguments
-    that controls which fields should[ not] be displayed.
-    """
 
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop('fields', None)
@@ -20,33 +17,34 @@ class DynamicFieldsMixin(object):
 
         super(DynamicFieldsMixin, self).__init__(*args, **kwargs)
 
-        if fields is not None:
-            field_names = self.get_dynamic_field_names(fields)
+        if not (fields or exclude):
+            return
 
-            subset = set(field_names)
-            existing = set(self.fields.keys())
-            for field_name in existing - subset:
-                self.fields.pop(field_name, None)
+        field_selector = sub if fields else and_
+        field_entries = fields or exclude
+        field_strings, field_dictionaries = self.split_fields(field_entries)
+        argument = 'fields' if fields else 'exclude'
 
-            for field_entry in fields:
-                if isinstance(field_entry, dict):
-                    self.pass_down_structure(field_entry, 'fields')
+        subset = set(field_strings)
+        existing = set(self.fields.keys())
 
-        elif exclude is not None:
-            for field_entry in exclude:
-                if isinstance(field_entry, dict):
-                    self.pass_down_structure(field_entry, 'exclude')
-                else:
-                    self.fields.pop(field_entry, None)
+        for field_name in field_selector(existing, subset):
+            self.fields.pop(field_name, None)
 
-    def get_dynamic_field_names(self, fields):
-        return [
-            field_entry.keys()[0]
-            if isinstance(field_entry, dict)
-            else field_entry
+        for field_entry in field_dictionaries:
+            self.pass_down_structure(field_entry, argument)
 
-            for field_entry in fields
-        ]
+    def split_fields(self, fields):
+        strings = []
+        dictionaries = []
+
+        for field_entry in fields:
+            if isinstance(field_entry, dict):
+                dictionaries.append(field_entry)
+            if isinstance(field_entry, basestring):
+                strings.append(field_entry)
+
+        return strings, dictionaries
 
     def get_field_and_kwargs(self, field_name):
         field = self.fields[field_name]
@@ -76,4 +74,3 @@ class DynamicFieldsMixin(object):
         field, kwargs = self.get_field_and_kwargs(field_name)
         kwargs[arg_name] = field_entry[field_name]
         self.fields[field_name] = field.__class__(**kwargs)
-
