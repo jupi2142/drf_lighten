@@ -1,13 +1,13 @@
 # DRF Lighten
 
 ## Purpose
-Even if we cal the same end point at multiple places, the information we want
+Even if we call the same end point at multiple places, the information we want
 from the response varies greatly. DRF Lighten makes it possible to specify and
 get only the data you want.
 
 
 ## Installation
-`pip install -U drf_lighten`
+`pip install drf_lighten`
 
 
 ## Usage
