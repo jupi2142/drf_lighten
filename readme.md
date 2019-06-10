@@ -1,4 +1,5 @@
 # DRF Lighten
+[![Maintainability](https://api.codeclimate.com/v1/badges/fb7592cf34907b7cb8d8/maintainability)](https://codeclimate.com/github/jupi2142/drf_lighten/maintainability)
 
 ## Purpose
 Even if we call the same end point at multiple places, the information we want
