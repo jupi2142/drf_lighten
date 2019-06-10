@@ -11,9 +11,9 @@ class DynamicFieldsMixin(object):
 
         bundle = zip(setting_names, defaults, argument_names)
 
-        for settings_name, default, argument_name in bundle:
+        for setting_name, default, argument_name in bundle:
             try:
-                query_param = getattr(settings, settings_name, default)
+                query_param = getattr(settings, setting_name, default)
                 structure = self.request.query_params[query_param]
                 kwargs[argument_name] = json.loads(structure)
             except (KeyError, ValueError, TypeError):

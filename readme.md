@@ -1,5 +1,7 @@
 # DRF Lighten
 [![Maintainability](https://api.codeclimate.com/v1/badges/fb7592cf34907b7cb8d8/maintainability)](https://codeclimate.com/github/jupi2142/drf_lighten/maintainability)
+![python3.x](https://img.shields.io/badge/python-3.x-brightgreen.svg)
+![python2.x](https://img.shields.io/badge/python-2.x-brightgreen.svg)
 
 ## Purpose
 Even if we call the same end point at multiple places, the information we want
