@@ -18,7 +18,8 @@ from drf_lighten.serializers import DynamicFieldsMixin
 from rest_framework import serializers
 
 
-class UserSerializer(DynamicFieldsMixin, serializers.HyperlinkedModelSerializer)
+class UserSerializer(DynamicFieldsMixin,
+                     serializers.HyperlinkedModelSerializer)
     class Meta:
         model = models.User
         fields = "__all__"
@@ -36,13 +37,13 @@ class ProfileSerializer(DynamicFieldsMixin,
 
 # views.py
 from app import models
-from drf_lighten.views import DynamicStructureMixin
+from drf_lighten.views import DynamicFieldsMixin
 from rest_framework import viewsets
 
 
 # …
 
-class ProfileViewSet(DynamicStructureMixin, viewsets.ModelViewSet):
+class ProfileViewSet(DynamicFieldsMixin, viewsets.ModelViewSet):
     queryset = models.Profile.objects.all()
     serializer_class = serializers.ProfileSerializer
 

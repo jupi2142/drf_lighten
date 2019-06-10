@@ -1,5 +1,7 @@
+import operator
+
+from django.utils.translation import ugettext
 from rest_framework import serializers
-from operator import and_, sub
 
 
 class DynamicFieldsMixin(object):
@@ -8,22 +10,21 @@ class DynamicFieldsMixin(object):
         fields = kwargs.pop('fields', None)
         exclude = kwargs.pop('exclude', None)
 
-        error_message = (
-            "You can't enable 'fields' AND 'exclude' at the same time"
-        )
-
         if fields and exclude:
-            raise Exception(error_message)
+            raise Exception(ugettext(
+                "You can't enable 'fields' AND 'exclude' at the same time"
+            ))
 
         super(DynamicFieldsMixin, self).__init__(*args, **kwargs)
 
-        if not (fields or exclude):
-            return
+        if fields:
+            self.lighten(fields, 'fields')
+        elif exclude:
+            self.lighten(exclude, 'exclude')
 
-        field_selector = sub if fields else and_
-        field_entries = fields or exclude
-        field_strings, field_dictionaries = self.split_fields(field_entries)
-        argument = 'fields' if fields else 'exclude'
+    def lighten(self, entries, argument):
+        field_selector = operator.sub if argument == 'fields' else operator.and_
+        field_strings, field_dictionaries = self.split_fields(entries)
 
         subset = set(field_strings)
         existing = set(self.fields.keys())

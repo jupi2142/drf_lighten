@@ -1,8 +1,9 @@
 import json
+
 from django.conf import settings
 
 
-class DynamicStructureMixin(object):
+class DynamicFieldsMixin(object):
     def get_serializer(self, *args, **kwargs):
         try:
             query_param = getattr(settings, 'DRF_LIGHTEN_INCLUDE', 'fields')
@@ -18,5 +19,4 @@ class DynamicStructureMixin(object):
         except (KeyError, ValueError, TypeError):
             pass
 
-        return super(DynamicStructureMixin, self).get_serializer(*args,
-                                                                 **kwargs)
+        return super(DynamicFieldsMixin, self).get_serializer(*args, **kwargs)
