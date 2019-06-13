@@ -23,29 +23,34 @@ class DynamicFieldsMixin(object):
             self.lighten(exclude, 'exclude')
 
     def lighten(self, entries, argument):
-        field_selector = operator.sub if argument == 'fields' else operator.and_
-        field_strings, field_dictionaries = self.split_fields(entries)
+        if argument == 'fields':
+            field_selector = operator.sub
+        else:
+            field_selector = operator.and_
+
+        field_strings, field_dictionary = self.split_fields(entries)
+
+        for field_name, field_entry in field_dictionary.items():
+            self.pass_down_structure(field_name, field_entry, argument)
 
         subset = set(field_strings)
+        never_pop = set(field_dictionary.keys())
         existing = set(self.fields.keys())
 
-        for field_name in field_selector(existing, subset):
+        for field_name in field_selector(existing, subset) - never_pop:
             self.fields.pop(field_name, None)
-
-        for field_entry in field_dictionaries:
-            self.pass_down_structure(field_entry, argument)
 
     def split_fields(self, fields):
         strings = []
-        dictionaries = []
+        dictionary = {}
 
         for field_entry in fields:
             if isinstance(field_entry, dict):
-                dictionaries.append(field_entry)
+                dictionary.update(field_entry)
             if isinstance(field_entry, basestring):
                 strings.append(field_entry)
 
-        return strings, dictionaries
+        return strings, dictionary
 
     def get_field_and_kwargs(self, field_name):
         field = self.fields[field_name]
@@ -67,11 +72,7 @@ class DynamicFieldsMixin(object):
 
         return field, kwargs
 
-    def pass_down_structure(self, field_entry, arg_name):
-        if not field_entry.keys():
-            return
-
-        field_name = field_entry.keys().pop()
+    def pass_down_structure(self, field_name, field_entry, arg_name):
         field, kwargs = self.get_field_and_kwargs(field_name)
-        kwargs[arg_name] = field_entry[field_name]
+        kwargs[arg_name] = field_entry
         self.fields[field_name] = field.__class__(**kwargs)
