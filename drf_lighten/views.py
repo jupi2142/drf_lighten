@@ -15,9 +15,9 @@ class DynamicFieldsMixin(object):
         for setting_name, default, argument_name in bundle:
             try:
                 query_param = getattr(settings, setting_name, default)
-                structure = self.request.query_params.pop(query_param)
+                structure = self.request.query_params.pop(query_param)[0]
                 kwargs[argument_name] = json.loads(structure)
-            except (KeyError, ValueError, TypeError):
+            except (KeyError, ValueError, TypeError, IndexError):
                 pass
 
         return super(DynamicFieldsMixin, self).get_serializer(*args, **kwargs)
