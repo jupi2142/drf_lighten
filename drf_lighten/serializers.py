@@ -1,7 +1,6 @@
 import operator
 
 from django.utils.translation import ugettext
-from rest_framework import serializers
 
 
 class DynamicFieldsMixin(object):
@@ -54,7 +53,7 @@ class DynamicFieldsMixin(object):
 
     def get_field_and_kwargs(self, field_name):
         field = self.fields[field_name]
-        many = isinstance(field, serializers.ListSerializer)
+        many = getattr(field, 'many', False)
         field = getattr(field, 'child', field)
 
         inherit = ('instance', 'data', 'partial', 'context',  # 'many',
@@ -62,7 +61,7 @@ class DynamicFieldsMixin(object):
                    'source', 'initial', 'label', 'help_text', 'style',
                    'error_messages', 'validators', 'allow_null')
         kwargs = {
-            attribute_name: getattr(field, attribute_name)
+            attribute_name: getattr(field, attribute_name, None)
             for attribute_name in inherit
         }
         kwargs['many'] = many
@@ -75,4 +74,6 @@ class DynamicFieldsMixin(object):
     def pass_down_structure(self, field_name, field_entry, arg_name):
         field, kwargs = self.get_field_and_kwargs(field_name)
         kwargs[arg_name] = field_entry
+        if not hasattr(field, 'fields'):
+            return
         self.fields[field_name] = field.__class__(**kwargs)
