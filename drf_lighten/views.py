@@ -8,13 +8,14 @@ class DynamicFieldsMixin(object):
         setting_names = ('DRF_LIGHTEN_INCLUDE', 'DRF_LIGHTEN_EXCLUDE')
         defaults = ('fields', 'exclude')
         argument_names = ('fields', 'exclude')
+        self.request.query_params._mutable = True
 
         bundle = zip(setting_names, defaults, argument_names)
 
         for setting_name, default, argument_name in bundle:
             try:
                 query_param = getattr(settings, setting_name, default)
-                structure = self.request.query_params[query_param]
+                structure = self.request.query_params.pop(query_param)
                 kwargs[argument_name] = json.loads(structure)
             except (KeyError, ValueError, TypeError):
                 pass
