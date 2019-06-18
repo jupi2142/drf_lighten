@@ -1,6 +1,6 @@
-import json
-
 from django.conf import settings
+
+from parsers import parse
 
 
 class DynamicFieldsMixin(object):
@@ -15,8 +15,8 @@ class DynamicFieldsMixin(object):
         for setting_name, default, argument_name in bundle:
             try:
                 query_param = getattr(settings, setting_name, default)
-                structure = self.request.query_params.pop(query_param)[0]
-                kwargs[argument_name] = json.loads(structure)
+                structure = self.request.query_params.pop(query_param).pop()
+                kwargs[argument_name] = parse(structure)
             except (KeyError, ValueError, TypeError, IndexError):
                 pass
 
