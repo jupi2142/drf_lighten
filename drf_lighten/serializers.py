@@ -1,6 +1,7 @@
 import operator
 
 from django.utils.translation import ugettext
+from rest_framework import serializers
 
 
 class DynamicFieldsMixin(object):
@@ -31,7 +32,8 @@ class DynamicFieldsMixin(object):
         field_strings, field_dictionary = self.split_fields(entries)
 
         for field_name, field_entry in field_dictionary.items():
-            self.pass_down_structure(field_name, field_entry, argument)
+            if field_name in self.fields:
+                self.pass_down_structure(field_name, field_entry, argument)
 
         subset = set(field_strings)
         never_pop = set(field_dictionary.keys())
@@ -52,45 +54,46 @@ class DynamicFieldsMixin(object):
 
         return strings, dictionary
 
-    def get_field_and_kwargs(self, field_name):
-        field = self.fields[field_name]
-        many = getattr(field, "many", False)
-        field = getattr(field, "child", field)
+    def get_kwargs(self, field):
+        field_name = field.field_name
+        inherit = set(serializers.MANY_RELATION_KWARGS).union(
+            set(serializers.LIST_SERIALIZER_KWARGS)
+        )  # .union({'queryset', 'view_name'})
 
-        inherit = (
-            "instance",
-            "data",
-            "partial",
-            "context",
-            "read_only",
-            "write_only",
-            "required",
-            "default",
-            "source",
-            "initial",
-            "label",
-            "help_text",
-            "style",
-            "error_messages",
-            "validators",
-            "allow_null",
-        )
-        kwargs = {
-            attribute_name: getattr(field, attribute_name, None)
-            for attribute_name in inherit
-        }
-        kwargs["many"] = many
+        kwargs = {}
+        for attribute_name in inherit:
+            value = getattr(field, attribute_name, None)
+            if value is not None:
+                kwargs[attribute_name] = value
 
         if kwargs["source"] in ["", field_name]:
             kwargs.pop("source")
 
-        kwargs['context'] = kwargs['context'] or self.context
+        kwargs['context'] = kwargs.get('context') or self.context
+        return kwargs
+
+
+    def get_field_and_kwargs(self, field_name):
+        field = self.fields[field_name]
+        many = True
+        if isinstance(field, serializers.ListSerializer):
+            field = field.child
+        elif isinstance(field, serializers.ManyRelatedField):
+            field.child_relation.source = field.source
+            field.child_relation.source_attrs = field.source_attrs
+            field.child_relation.field_name = field.field_name
+            field = field.child_relation
+        else:
+            many = False
+
+        kwargs = self.get_kwargs(field)
+        kwargs["many"] = many
 
         return field, kwargs
 
     def get_expanding_serializer(self, field, **kwargs):
         field_name = field.field_name
-        expandable_fields = getattr(self.Meta, "expandable_fields", None)
+        expandable_fields = getattr(self.Meta, "expandable_fields", {})
         try:
             class_, exp_args, exp_kwargs = expandable_fields[field_name]
         except (ValueError, TypeError):
@@ -107,4 +110,7 @@ class DynamicFieldsMixin(object):
             new_field = self.get_expanding_serializer(field, **kwargs)
         else:
             new_field = field.__class__(**kwargs)
+
+        if getattr(new_field, 'source'):
+            return
         self.fields[field_name] = new_field
