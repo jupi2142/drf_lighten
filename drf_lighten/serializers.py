@@ -1,6 +1,5 @@
 import operator
 
-from django.utils.translation import ugettext
 from rest_framework import serializers
 
 
@@ -8,13 +7,6 @@ class DynamicFieldsMixin(object):
     def __init__(self, *args, **kwargs):
         fields = kwargs.pop("fields", None)
         exclude = kwargs.pop("exclude", None)
-
-        if fields and exclude:
-            raise Exception(
-                ugettext(
-                    "You can't enable 'fields' AND 'exclude' at the same time"
-                )
-            )
 
         super(DynamicFieldsMixin, self).__init__(*args, **kwargs)
 
@@ -69,9 +61,8 @@ class DynamicFieldsMixin(object):
         if kwargs["source"] in ["", field_name]:
             kwargs.pop("source")
 
-        kwargs['context'] = kwargs.get('context') or self.context
+        kwargs["context"] = kwargs.get("context") or self.context
         return kwargs
-
 
     def get_field_and_kwargs(self, field_name):
         field = self.fields[field_name]
@@ -111,6 +102,6 @@ class DynamicFieldsMixin(object):
         else:
             new_field = field.__class__(**kwargs)
 
-        if getattr(new_field, 'source'):
+        if getattr(new_field, "source"):
             return
         self.fields[field_name] = new_field
