@@ -7,7 +7,7 @@ def re_parser(string):
     step_1 = re.sub(r'(\w+)\{', r'{"\1": [', step_0)
     step_2 = re.sub(r'(\w+)\[', r'{"\1": [', step_1)
     step_3 = re.sub(r'](?=.)', r']}', step_2)
-    step_4 = re.sub(r'(?<=\[|,)(\w+)(?=,|])', r'"\1"', step_3)
+    step_4 = re.sub(r'(?<=\[|,)(\*|\w+)(?=,|])', r'"\1"', step_3)
     return json.loads(step_4)
 
 

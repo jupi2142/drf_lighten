@@ -49,6 +49,8 @@ class DynamicFieldsMixin(object):
             if isinstance(field_entry, string_type):
                 strings.append(field_entry)
 
+        if '*' in strings:
+            strings = set(self.fields.keys()) - set(dictionary.keys())
         return strings, dictionary
 
     def get_kwargs(self, field):
