@@ -55,13 +55,14 @@ class DynamicFieldsMixin(object):
         field_name = field.field_name
         inherit = set(relations.MANY_RELATION_KWARGS).union(
             set(serializers.LIST_SERIALIZER_KWARGS)
-        )  # .union({'queryset', 'view_name'})
+        ).difference({'html_cutoff_text', 'html_cutoff'})
 
         kwargs = {}
         for attribute_name in inherit:
-            value = getattr(field, attribute_name, None)
-            if value is not None:
-                kwargs[attribute_name] = value
+            try:
+                kwargs[attribute_name] = getattr(field, attribute_name)
+            except AttributeError:
+                pass
 
         if kwargs["source"] in ["", field_name]:
             kwargs.pop("source")
