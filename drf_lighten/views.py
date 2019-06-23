@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from parsers import parse
+from .parsers import parse
 
 
 class DynamicFieldsMixin(object):

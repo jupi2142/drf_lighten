@@ -1,3 +1,3 @@
 """A way to remove unwanted fields from a serializer"""
 
-__version__ = "0.5.2"
+__version__ = "0.5.3"
