@@ -1,6 +1,11 @@
 import operator
 
-from rest_framework import serializers
+from rest_framework import relations, serializers
+
+try:
+    string_type = basestring
+except NameError:
+    string_type = str
 
 
 class DynamicFieldsMixin(object):
@@ -41,14 +46,14 @@ class DynamicFieldsMixin(object):
         for field_entry in fields:
             if isinstance(field_entry, dict):
                 dictionary.update(field_entry)
-            if isinstance(field_entry, basestring):
+            if isinstance(field_entry, string_type):
                 strings.append(field_entry)
 
         return strings, dictionary
 
     def get_kwargs(self, field):
         field_name = field.field_name
-        inherit = set(serializers.MANY_RELATION_KWARGS).union(
+        inherit = set(relations.MANY_RELATION_KWARGS).union(
             set(serializers.LIST_SERIALIZER_KWARGS)
         )  # .union({'queryset', 'view_name'})
 
