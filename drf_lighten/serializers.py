@@ -108,7 +108,10 @@ class DynamicFieldsMixin(object):
         if not hasattr(field, "fields"):
             new_field = self.get_expanding_serializer(field, **kwargs)
         else:
-            return field.lighten(field_entry, arg_name)
+            try:
+                return field.lighten(field_entry, arg_name)
+            except AttributeError:
+                return
 
         if getattr(new_field, "source"):
             return
