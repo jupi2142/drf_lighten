@@ -1,5 +1,6 @@
 import operator
 
+from django.conf import settings
 from rest_framework import relations, serializers
 
 try:
@@ -92,11 +93,14 @@ class DynamicFieldsMixin(object):
 
     def get_expanding_serializer(self, field, **kwargs):
         field_name = field.field_name
-        expandable_fields = getattr(self.Meta, "expandable_fields", {})
+        expansion_dict_attribute = getattr(settings,
+                                           'DRF_LIGHTEN_EXPANION_CONFIG',
+                                           'expandable_fields')
+        expansion_dict = getattr(self.Meta, expansion_dict_attribute, {})
         try:
-            class_, exp_args, exp_kwargs = expandable_fields[field_name]
+            class_, exp_args, exp_kwargs = expansion_dict[field_name]
         except (ValueError, TypeError):
-            class_, exp_args, exp_kwargs = expandable_fields[field_name], (), {}
+            class_, exp_args, exp_kwargs = expansion_dict[field_name], (), {}
         except KeyError:
             return field
         exp_kwargs.update(kwargs)
