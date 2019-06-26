@@ -17,8 +17,8 @@ def recursive_parser(string):
 
 def parse(string):
     try:
-        return json.loads(string)
+        parsed = json.loads(string)
     except (ValueError, TypeError):
-        pass
+        parsed = re_parser(string)
 
-    return re_parser(string)
+    return parsed
