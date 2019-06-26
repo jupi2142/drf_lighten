@@ -15,10 +15,28 @@ def recursive_parser(string):
     pass
 
 
+def validate_star(parsed):
+    strings = []
+    dictionary = {}
+
+    for field_entry in parsed:
+        if isinstance(field_entry, dict):
+            dictionary.update(field_entry)
+        else:
+            strings.append(field_entry)
+
+    if '*' in strings and len(strings) != 1:
+        raise ValueError
+
+    for inner_entry in dictionary.values():
+        validate_star(inner_entry)
+
+
 def parse(string):
     try:
         parsed = json.loads(string)
     except (ValueError, TypeError):
         parsed = re_parser(string)
 
+    validate_star(parsed)
     return parsed
