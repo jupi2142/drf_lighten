@@ -15,9 +15,9 @@ class DynamicFieldsMixin(object):
 
         super(DynamicFieldsMixin, self).__init__(*args, **kwargs)
 
-        if fields:
+        if fields is not None:
             self.lighten(fields, "fields")
-        elif exclude:
+        elif exclude is not None:
             self.lighten(exclude, "exclude")
 
     def lighten(self, entries, argument):
