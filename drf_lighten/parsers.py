@@ -15,7 +15,7 @@ def recursive_parser(string):
     pass
 
 
-def validate_star(parsed):
+def split(parsed):
     strings = []
     dictionary = {}
 
@@ -25,11 +25,24 @@ def validate_star(parsed):
         else:
             strings.append(field_entry)
 
-    if '*' in strings and len(strings) != 1:
-        raise ValueError
+    return strings, dictionary
+
+
+def preprocess(parsed):
+    strings, dictionary = split(parsed)
+    if dictionary:
+        return strings + [dictionary]
+    return strings
+
+
+def validate_star(parsed):
+    strings, dictionary = split(parsed)
 
     for inner_entry in dictionary.values():
         validate_star(inner_entry)
+
+    if '*' in strings and len(strings) != 1:
+        raise ValueError
 
 
 def parse(string):
@@ -38,5 +51,6 @@ def parse(string):
     except (ValueError, TypeError):
         parsed = re_parser(string)
 
+    parsed = preprocess(parsed)
     validate_star(parsed)
     return parsed

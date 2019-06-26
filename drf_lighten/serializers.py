@@ -2,6 +2,7 @@ import operator
 
 from django.conf import settings
 from rest_framework import relations, serializers
+from .parsers import split
 
 try:
     string_type = basestring
@@ -41,16 +42,8 @@ class DynamicFieldsMixin(object):
             self.fields.pop(field_name, None)
 
     def split_fields(self, fields):
-        strings = []
-        dictionary = {}
-
-        for field_entry in fields:
-            if isinstance(field_entry, dict):
-                dictionary.update(field_entry)
-            if isinstance(field_entry, string_type):
-                strings.append(field_entry)
-
-        if '*' in strings:
+        strings, dictionary = split(fields)
+        if strings == ['*']:
             strings = set(self.fields.keys()) - set(dictionary.keys())
         return strings, dictionary
 
