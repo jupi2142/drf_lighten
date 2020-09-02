@@ -2,7 +2,9 @@ import operator
 
 from django.conf import settings
 from rest_framework import relations, serializers
+
 from .parsers import split
+from .utils import get_model_serializer_subclasses
 
 try:
     string_type = basestring
@@ -21,6 +23,16 @@ class DynamicFieldsMixin(object):
             self.lighten(fields, "fields")
         elif exclude is not None:
             self.lighten(exclude, "exclude")
+
+    @classmethod
+    def get_model_serializer(cls, model):
+        subclasses = get_model_serializer_subclasses(cls)
+        for subclass in subclasses:
+            try:
+                if subclass.Meta.model == model:
+                    return subclass
+            except AttributeError:
+                pass
 
     def lighten(self, entries, argument):
         if argument == "fields":
@@ -43,15 +55,17 @@ class DynamicFieldsMixin(object):
 
     def split_fields(self, fields):
         strings, dictionary = split(fields)
-        if strings == ['*']:
+        if strings == ["*"]:
             strings = set(self.fields.keys()) - set(dictionary.keys())
         return strings, dictionary
 
     def get_kwargs(self, field):
         field_name = field.field_name
-        inherit = set(relations.MANY_RELATION_KWARGS).union(
-            set(serializers.LIST_SERIALIZER_KWARGS)
-        ).difference({'html_cutoff_text', 'html_cutoff'})
+        inherit = (
+            set(relations.MANY_RELATION_KWARGS)
+            .union(set(serializers.LIST_SERIALIZER_KWARGS))
+            .difference({"html_cutoff_text", "html_cutoff"})
+        )
 
         kwargs = {}
         for attribute_name in inherit:
@@ -86,16 +100,29 @@ class DynamicFieldsMixin(object):
 
     def get_expanding_serializer(self, field, **kwargs):
         field_name = field.field_name
-        expansion_dict_attribute = getattr(settings,
-                                           'DRF_LIGHTEN_EXPANION_CONFIG',
-                                           'expandable_fields')
+        expansion_dict_attribute = getattr(
+            settings, "DRF_LIGHTEN_EXPANSION_CONFIG", "expandable_fields"
+        )
         expansion_dict = getattr(self.Meta, expansion_dict_attribute, {})
         try:
             class_, exp_args, exp_kwargs = expansion_dict[field_name]
         except (ValueError, TypeError):
             class_, exp_args, exp_kwargs = expansion_dict[field_name], (), {}
         except KeyError:
-            return field
+            current_model = self.Meta.model
+            model_field = current_model._meta.get_field(field.source)
+            target_model = model_field.target_field.model
+            try:
+                class_ = DynamicFieldsMixin.get_model_serializer(target_model)
+                if class_ is None:
+                    raise ValueError
+            except ValueError:
+                try:
+                    from drf_generator.serializers import serializer_factory
+                except ImportError:
+                    return field
+                class_ = serializer_factory(target_model)
+            exp_args, exp_kwargs = (), {}
         exp_kwargs.update(kwargs)
         return class_(*exp_args, **exp_kwargs)
 
