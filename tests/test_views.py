@@ -1,6 +1,6 @@
 from django.urls import reverse
 from rest_framework.test import APITestCase
-from tests.testapp.models import Book, Course, Student, Phone
+from tests.testapp.models import Book, Course, Phone, Student
 
 
 class ViewTests(APITestCase):
@@ -12,14 +12,15 @@ class ViewTests(APITestCase):
             title="Basic Data Structures", author="S.Mobit"
         )
 
-        self.course = Course.objects.create(name="Data Structures",
-                                            code="CS210")
+        self.course = Course.objects.create(
+            name="Data Structures", code="CS210"
+        )
 
         self.course.books.set([self.book1, self.book2])
 
-        self.student = Student.objects.create(name="Yezy",
-                                              age=24,
-                                              course=self.course)
+        self.student = Student.objects.create(
+            name="Yezy", age=24, course=self.course
+        )
 
         self.phone1 = Phone.objects.create(
             number="076711110", type="Office", student=self.student
@@ -37,15 +38,13 @@ class ViewTests(APITestCase):
 
     def test_retrieve_with_flat_query(self):
         url = reverse("book-detail", args=[self.book1.id])
-        response = self.client.get(url + "?query={title, author}",
-                                   format="json")
+        response = self.client.get(
+            url + "?query={title, author}", format="json"
+        )
 
         self.assertEqual(
             response.data,
-            {
-                "title": "Advanced Data Structures",
-                "author": "S.Mobit"
-            }
+            {"title": "Advanced Data Structures", "author": "S.Mobit"},
         )
 
     def test_retrieve_with_nested_flat_query(self):
@@ -90,7 +89,7 @@ class ViewTests(APITestCase):
                 "age": 24,
                 "phone_numbers": [
                     {"number": "076711110"},
-                    {"number": "073008880"}
+                    {"number": "073008880"},
                 ],
             },
         )
@@ -99,8 +98,9 @@ class ViewTests(APITestCase):
 
     def test_list_with_flat_query(self):
         url = reverse("book-list")
-        response = self.client.get(url + "?query={title, author}",
-                                   format="json")
+        response = self.client.get(
+            url + "?query={title, author}", format="json"
+        )
 
         self.assertEqual(
             response.data,
@@ -118,13 +118,13 @@ class ViewTests(APITestCase):
 
         self.assertEqual(
             response.data,
-            [{
-                "name": "Yezy",
-                "age": 24,
-                "course": {
-                    "name": "Data Structures"
+            [
+                {
+                    "name": "Yezy",
+                    "age": 24,
+                    "course": {"name": "Data Structures"},
                 }
-            }],
+            ],
         )
 
     def test_list_with_nested_iterable_query(self):
@@ -161,7 +161,7 @@ class ViewTests(APITestCase):
                     "age": 24,
                     "phone_numbers": [
                         {"number": "076711110"},
-                        {"number": "073008880"}
+                        {"number": "073008880"},
                     ],
                 }
             ],

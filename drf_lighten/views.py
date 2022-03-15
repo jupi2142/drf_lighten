@@ -1,23 +1,22 @@
+from typing import Set
+
 from django.conf import settings
 
-from .parsers import parse
+from .exceptions import ParserException
+from .parsers import Parser, default_parser
+from .settings import Setting
 
 
-class DynamicFieldsMixin(object):
+class DynamicFieldsMixin:
+    parser: Parser = default_parser
+    setting: Setting = Setting()
+
     def get_serializer(self, *args, **kwargs):
-        setting_names = ('DRF_LIGHTEN_INCLUDE', 'DRF_LIGHTEN_EXCLUDE')
-        defaults = ('fields', 'exclude')
-        argument_names = ('fields', 'exclude')
-        self.request.query_params._mutable = True
-
-        bundle = zip(setting_names, defaults, argument_names)
-
-        for setting_name, default, argument_name in bundle:
-            try:
-                query_param = getattr(settings, setting_name, default)
-                structure = self.request.query_params.pop(query_param).pop()
-                kwargs[argument_name] = parse(structure)
-            except (KeyError, ValueError, TypeError, IndexError):
-                pass
+        if self.setting.include in self.request.query_params:
+            raw_structure = self.request.query_params[self.setting.include]
+            kwargs["fields"] = self.parser.parse(raw_structure)
+        elif self.setting.exclude in self.request.query_params:
+            raw_structure = self.request.query_params[self.setting.exclude]
+            kwargs["exclude"] = self.parser.parse(raw_structure)
 
         return super(DynamicFieldsMixin, self).get_serializer(*args, **kwargs)

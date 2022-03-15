@@ -1,10 +1,11 @@
+from drf_lighten.views import DynamicFieldsMixin
 from rest_framework import viewsets
 from tests.testapp.models import Book, Course, Student
-from tests.testapp.serializers import (BookSerializer,
-                                       CourseSerializer,
-                                       StudentSerializer)
-
-from drf_lighten.views import DynamicFieldsMixin
+from tests.testapp.serializers import (
+    BookSerializer,
+    CourseSerializer,
+    StudentSerializer,
+)
 
 
 class BookViewSet(DynamicFieldsMixin, viewsets.ModelViewSet):

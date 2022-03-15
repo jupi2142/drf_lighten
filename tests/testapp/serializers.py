@@ -1,13 +1,12 @@
+from drf_lighten.serializers import DynamicFieldsMixin
 from rest_framework import serializers
 from tests.testapp.models import Book, Course, Phone, Student
-
-from drf_lighten.serializers import DynamicFieldsMixin
 
 
 class BookSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Book
-        fields = '__all__'
+        fields = "__all__"
 
 
 class CourseSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -15,13 +14,13 @@ class CourseSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = '__all__'
+        fields = "__all__"
 
 
 class PhoneSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
     class Meta:
         model = Phone
-        fields = '__all__'
+        fields = "__all__"
 
 
 class StudentSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
@@ -30,4 +29,4 @@ class StudentSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
 
     class Meta:
         model = Student
-        fields = '__all__'
+        fields = "__all__"
