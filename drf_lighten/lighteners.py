@@ -17,70 +17,61 @@ class Lightener(ABC):
         return current, nested
 
     @abstractmethod
+    def fields_to_keep(
+        self,
+        serializer: serializers.Serializer,
+        current: List[str],
+        nested: DictField,
+    ) -> List[str]:
+        ...
+
     def lighten(
         self,
         serializer: serializers.Serializer,
         structure: Structure,
     ) -> None:
-        ...
+        serializer = getattr(serializer, "child", serializer)
+        if not hasattr(serializer, "fields"):
+            return
+
+        current, nested = self.get_fields(structure)
+        keep = self.fields_to_keep(serializer, current, nested)
+
+        serializer.fields = {
+            field_name: field
+            for field_name, field in serializer.fields.items()
+            if field_name in keep
+        }
+
+        for key, structure in nested.items():
+            try:
+                nested_serializer = serializer.fields[key]
+            except KeyError:
+                continue
+            self.lighten(nested_serializer, structure)
 
 
 class Keeper(Lightener):
-    def lighten(
+    def fields_to_keep(
         self,
         serializer: serializers.Serializer,
-        structure: Structure,
-    ) -> None:
-        keep_current, keep_nested = self.get_fields(structure)
-
-        keep = keep_current + list(keep_nested.keys())
-
-        if "*" not in keep:
-            if not hasattr(serializer, "fields"):
-                serializer = serializer.child
-                # expand if structure says nested
-                # Replace serializers inside the lightener subclasses
-                # Keeper if .child isn't working
-
-
-            serializer.fields = {
-                field_name: field
-                for field_name, field in serializer.fields.items()
-                if field_name in keep
-            }
-
-        for key, structure in keep_nested.items():
-            try:
-                nested_serializer = serializer.fields[key]
-                self.lighten(nested_serializer, structure)
-            except KeyError:
-                continue
+        current: List[str],
+        nested: DictField,
+    ) -> List[str]:
+        if "*" in current:
+            return list(serializer.fields.keys())
+        return current + list(nested.keys())
 
 
 class Omitter(Lightener):
-    def lighten(
+    def fields_to_keep(
         self,
         serializer: serializers.Serializer,
-        structure: Structure,
-    ) -> None:
-        omit_current, omit_nested = self.get_fields(structure)
-
-        if "*" not in omit_current:
-            if not hasattr(serializer, "fields"):
-                serializer = serializer.child
-                # expand if structure says nested
-                # Replace serializers inside the lightener subclasses
-                # Keeper if .child isn't working
-
-            serializer.fields = {
-                field_name: field
-                for field_name, field in serializer.fields.items()
-                if field_name not in omit_current
-            }
-
-        for key, structure in omit_nested.items():
-            try:
-                nested_serializer = serializer.fields[key]
-                self.lighten(nested_serializer, structure)
-            except KeyError:
-                continue
+        current: List[str],
+        nested: DictField,
+    ) -> List[str]:
+        if "*" in current:
+            current = list(serializer.fields.keys())
+        return list(set(serializer.fields.keys()) - set(current)) + list(
+            nested.keys()
+        )
