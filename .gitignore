@@ -1,2 +1,4 @@
 .ropeproject
 dist
+**/*.pyc
+**/__pycache__
