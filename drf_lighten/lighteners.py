@@ -1,77 +1,91 @@
 from abc import ABC, abstractmethod
-from typing import List, Tuple
+from typing import Dict, List, Optional
 
-from rest_framework import serializers
+from rest_framework.serializers import Serializer
 
 from .types import DictField, Structure
 
 
-class Lightener(ABC):
-    def get_fields(self, structure: Structure) -> Tuple[List[str], DictField]:
-        current, nested = [], {}
-        for field in structure:
-            if isinstance(field, str):
-                current.append(field)
-            elif isinstance(field, dict):
-                nested.update(field)
-        return current, nested
-
+class LightenerABC(ABC):
     @abstractmethod
-    def fields_to_keep(
+    def lighten(
         self,
-        serializer: serializers.Serializer,
-        current: List[str],
-        nested: DictField,
-    ) -> List[str]:
+        serializer: Serializer,
+        structure: Dict[str, Dict],
+    ) -> None:
         ...
+
+
+class Lightener(LightenerABC):
+    def _omit(self, serializer: Serializer, fields: List[str]):
+        for field in fields:
+            serializer.fields.pop(field, None)
+
+    def _keep(self, serializer: Serializer, fields: List[str]):
+        for field in list(serializer.fields.keys()):
+            if field not in fields:
+                serializer.fields.pop(field, None)
 
     def lighten(
         self,
-        serializer: serializers.Serializer,
-        structure: Structure,
+        serializer: Serializer,
+        structure: Dict[str, Dict],
     ) -> None:
         serializer = getattr(serializer, "child", serializer)
         if not hasattr(serializer, "fields"):
             return
 
-        current, nested = self.get_fields(structure)
-        keep = self.fields_to_keep(serializer, current, nested)
+        if structure["type"] == "omit":
+            self._omit(serializer, structure["fields"]["self"])
+        else:
+            self._keep(
+                serializer,
+                (
+                    structure["fields"].get("self", [])
+                    + list(structure["fields"].get("nested", {}).keys())
+                ),
+            )
 
-        serializer.fields = {
-            field_name: field
-            for field_name, field in serializer.fields.items()
-            if field_name in keep
-        }
-
-        for key, structure in nested.items():
+        for key, nested_structure in structure["fields"]["nested"].items():
             try:
                 nested_serializer = serializer.fields[key]
             except KeyError:
                 continue
-            self.lighten(nested_serializer, structure)
+            self.lighten(nested_serializer, nested_structure)
 
 
-class Keeper(Lightener):
-    def fields_to_keep(
-        self,
-        serializer: serializers.Serializer,
-        current: List[str],
-        nested: DictField,
-    ) -> List[str]:
-        if "*" in current:
-            return list(serializer.fields.keys())
-        return current + list(nested.keys())
+
+def convert(fields: Structure, type_='keep') -> dict:
+    self_ = []
+    nested = {}
+
+    if not fields:
+        return {} 
+
+    for field in fields:
+        if isinstance(field, str):
+            self_.append(field)
+        elif isinstance(field, dict):
+            for key, inner_field in field.items():
+                nested[key] = convert(inner_field, type_)
+
+    return {
+        "type": type_,
+        "fields": {
+            "self": self_,
+            "nested": nested
+        }
+    }
 
 
-class Omitter(Lightener):
-    def fields_to_keep(
-        self,
-        serializer: serializers.Serializer,
-        current: List[str],
-        nested: DictField,
-    ) -> List[str]:
-        if "*" in current:
-            current = list(serializer.fields.keys())
-        return list(set(serializer.fields.keys()) - set(current)) + list(
-            nested.keys()
-        )
+def merge(field_structure, exclude_structure) -> dict:
+    ...
+
+def structure_adapter(
+    fields: Optional[Structure] = None,
+    exclude: Optional[Structure] = None,
+) -> dict:
+    field_structure = convert(fields or [], 'keep')
+    exclude_structure = convert(exclude or [], 'omit')
+    
+    return merge(field_structure, exclude_structure)

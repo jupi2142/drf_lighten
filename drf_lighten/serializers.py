@@ -1,25 +1,38 @@
-from django.conf import settings
+from typing import Dict, List, Optional
 
-from .lighteners import Keeper, Lightener, Omitter
-
-default_keeper = Keeper()
-default_omitter = Omitter()
+from .lighteners import Lightener, LightenerABC, structure_adapter
+from .types import Structure
 
 
-class DynamicFieldsMixin(object):
+class DynamicStructureMixin(object):
     def __init__(
         self,
         *args,
-        keeper: Lightener = default_keeper,
-        omitter: Lightener = default_omitter,
+        structure: Optional[dict] = None,
+        lightener: LightenerABC = Lightener(),
         **kwargs,
     ):
-        fields = kwargs.pop("fields", None)
-        exclude = kwargs.pop("exclude", None)
 
-        super(DynamicFieldsMixin, self).__init__(*args, **kwargs)
+        super(DynamicStructureMixin, self).__init__(*args, **kwargs)
 
-        if fields is not None:
-            keeper.lighten(self, fields)
-        elif exclude is not None:
-            omitter.lighten(self, exclude)
+        if structure:
+            lightener.lighten(self, structure)
+
+
+class DynamicFieldsMixin(DynamicStructureMixin):
+    def __init__(
+        self,
+        *args,
+        fields: Optional[Structure] = None,
+        exclude: Optional[Structure] = None,
+        **kwargs,
+    ):
+
+        structure = None
+        if fields or exclude:
+            structure = structure_adapter(fields, exclude)
+        super(DynamicFieldsMixin, self).__init__(
+            structure=structure,
+            *args,
+            **kwargs,
+        )
