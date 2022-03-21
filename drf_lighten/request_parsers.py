@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from rest_framwwork.request import Request
+from rest_framework.request import Request
 
 from .parsers import (
     Parser,
