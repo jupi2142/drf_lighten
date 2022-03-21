@@ -7,7 +7,7 @@ class Setting:
         structure: str = getattr(
             settings,
             "DRF_LIGTHEN_STRUCTURE",
-            "struct",
+            "query",
         ),
         include: str = getattr(
             settings,

@@ -1,45 +1,24 @@
-from typing import Optional
-
-from django.conf import settings
-
-from .parsers import Parser, StackParser, default_parser
 from .settings import Setting
+from .request_parsers import OldRequestParser, RequestParser
+
+setting = Setting()
 
 
 class DynamicStructureMixin:
-    parser: Optional[Parser] = None
-    setting: Setting = Setting()
-
-    def get_parser(self):
-        if self.parser:
-            return self.parser
-        return StackParser()
+    parser: RequestParser = RequestParser(setting.struct)
 
     def get_serializer(self, *args, **kwargs):
-        if self.setting.struct in self.request.query_params:
-            raw_structure = self.request.query_params[self.setting.struct]
-            kwargs["structure"] = self.get_parser().parse(raw_structure)
-
+        kwargs["structure"] = self.parser.parse(self.request)
         return super(DynamicStructureMixin, self).get_serializer(
             *args, **kwargs
         )
 
 
 class DynamicFieldsMixin:
-    parser: Optional[Parser] = None
-    setting: Setting = Setting()
-
-    def get_parser(self):
-        if self.parser:
-            return self.parser
-        return default_parser
+    include_parser: OldRequestParser = OldRequestParser(setting.include)
+    exclude_parser: OldRequestParser = OldRequestParser(setting.exclude)
 
     def get_serializer(self, *args, **kwargs):
-        if self.setting.include in self.request.query_params:
-            raw_structure = self.request.query_params[self.setting.include]
-            kwargs["fields"] = self.get_parser().parse(raw_structure)
-        if self.setting.exclude in self.request.query_params:
-            raw_structure = self.request.query_params[self.setting.exclude]
-            kwargs["exclude"] = self.get_parser().parse(raw_structure)
-
+        kwargs["fields"] = self.include_parser.parse(self.request)
+        kwargs["exclude"] = self.exclude_parser.parse(self.request)
         return super(DynamicFieldsMixin, self).get_serializer(*args, **kwargs)

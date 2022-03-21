@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from rest_framework.serializers import Serializer
 
-from .types import DictField, Structure
+from .types import Structure
 
 
 class LightenerABC(ABC):
@@ -54,38 +54,57 @@ class Lightener(LightenerABC):
             self.lighten(nested_serializer, nested_structure)
 
 
-
-def convert(fields: Structure, type_='keep') -> dict:
+def adapt(fields: Structure, type_="keep") -> dict:
     self_ = []
     nested = {}
-
-    if not fields:
-        return {} 
 
     for field in fields:
         if isinstance(field, str):
             self_.append(field)
         elif isinstance(field, dict):
             for key, inner_field in field.items():
-                nested[key] = convert(inner_field, type_)
+                nested[key] = adapt(inner_field, type_)
 
     return {
         "type": type_,
         "fields": {
             "self": self_,
-            "nested": nested
-        }
+            "nested": nested,
+        },
     }
 
 
-def merge(field_structure, exclude_structure) -> dict:
-    ...
+def merge(fields: dict, exclude: dict) -> dict:
+    unified = {
+        "type": "keep",
+        "fields": {
+            "self": [],
+            "nested": {},
+        },
+    }
+    if fields["fields"]["self"] and not exclude["fields"]["self"]:
+        unified["type"] = "keep"
+        unified["fields"]["self"] = fields["fields"]["self"]
+    elif not fields["fields"]["self"] and exclude["fields"]["self"]:
+        unified["type"] = "omit"
+        unified["fields"]["self"] = exclude["fields"]["self"]
 
-def structure_adapter(
-    fields: Optional[Structure] = None,
-    exclude: Optional[Structure] = None,
-) -> dict:
-    field_structure = convert(fields or [], 'keep')
-    exclude_structure = convert(exclude or [], 'omit')
-    
-    return merge(field_structure, exclude_structure)
+    all_nested_keys = list(fields["fields"]["nested"].keys()) + list(
+        exclude["fields"]["nested"].keys()
+    )
+
+    for key in all_nested_keys:
+        if (
+            key in fields["fields"]["nested"]
+            and key in exclude["fields"]["nested"]
+        ):
+            unified["fields"]["nested"][key] = merge(
+                fields["fields"]["nested"][key],
+                exclude["fields"]["nested"][key],
+            )
+        elif key in fields["fields"]["nested"]:
+            unified["fields"]["nested"][key] = fields["fields"]["nested"][key]
+        elif key in exclude["fields"]["nested"]:
+            unified["fields"]["nested"][key] = exclude["fields"]["nested"][key]
+
+    return unified

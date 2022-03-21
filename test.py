@@ -1,10 +1,77 @@
 import unittest
-from drf_lighten.parsers import StackParser
+from drf_lighten.parsers import UnifiedParser, DotParser
 
 
-class ParserTestCase(unittest.TestCase):
+class DotParserTestCase(unittest.TestCase):
     def setUp(self):
-        self.parser = StackParser()
+        self.parser = DotParser()
+        self.correct_cases = {
+            "id,value": ["id", "value"],
+            "id,value,test.id,test.value": [
+                "id",
+                "value",
+                {
+                    "test": ["id", "value"],
+                },
+            ],
+            "id,value,test.id,test.value,jupi": [
+                "id",
+                "jupi",
+                "value",
+                {
+                    "test": ["id", "value"],
+                },
+            ],
+            "id,value,test.id,test.exit.id,non.id": [
+                "id",
+                "value",
+                {
+                    "test": [
+                        "id",
+                        {
+                            "exit": ["id"],
+                        },
+                    ],
+                    "non": ["id"],
+                },
+            ],
+            "id,value,test.id,test.exit.id": [
+                "id",
+                "value",
+                {
+                    "test": [
+                        "id",
+                        {
+                            "exit": ["id"],
+                        },
+                    ],
+                },
+            ],
+            "id,value,test.id,test.exit.id,test.exit.value": [
+                "id",
+                "value",
+                {
+                    "test": [
+                        "id",
+                        {
+                            "exit": ["id", "value"],
+                        },
+                    ],
+                },
+            ],
+        }
+
+    def test_correct(self):
+        for string, correct_result in self.correct_cases.items():
+            with self.subTest():
+                print(string.ljust(50), end="")
+                print("... SUCCESS".rjust(40))
+                self.assertEqual(self.parser.parse(string), correct_result)
+
+
+class UnifiedParserTestCase(unittest.TestCase):
+    def setUp(self):
+        self.parser = UnifiedParser()
         self.correct_cases = {
             "{id,value}": {
                 "type": "keep",

@@ -1,6 +1,6 @@
-from typing import Dict, List, Optional
+from typing import Optional
 
-from .lighteners import Lightener, LightenerABC, structure_adapter
+from .lighteners import Lightener, LightenerABC, adapt, merge
 from .types import Structure
 
 
@@ -12,27 +12,31 @@ class DynamicStructureMixin(object):
         lightener: LightenerABC = Lightener(),
         **kwargs,
     ):
-
         super(DynamicStructureMixin, self).__init__(*args, **kwargs)
 
         if structure:
             lightener.lighten(self, structure)
 
 
-class DynamicFieldsMixin(DynamicStructureMixin):
+class DynamicFieldsMixin(object):
     def __init__(
         self,
         *args,
         fields: Optional[Structure] = None,
         exclude: Optional[Structure] = None,
+        lightener: LightenerABC = Lightener(),
         **kwargs,
     ):
-
-        structure = None
-        if fields or exclude:
-            structure = structure_adapter(fields, exclude)
         super(DynamicFieldsMixin, self).__init__(
-            structure=structure,
             *args,
             **kwargs,
         )
+
+        if fields or exclude:
+            lightener.lighten(
+                self,
+                merge(
+                    adapt(fields or [], "keep"),
+                    adapt(exclude or [], "omit"),
+                ),
+            )
