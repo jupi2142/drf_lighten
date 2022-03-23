@@ -2,13 +2,19 @@
 [![PyPI version](https://badge.fury.io/py/drf_lighten.svg)](https://badge.fury.io/py/drf_lighten)
 [![Maintainability](https://api.codeclimate.com/v1/badges/fb7592cf34907b7cb8d8/maintainability)](https://codeclimate.com/github/jupi2142/drf_lighten/maintainability)
 ![python3.x](https://img.shields.io/badge/python-3.x-brightgreen.svg)
+[![Downloads](https://pepy.tech/badge/drf-lighten)](https://pepy.tech/project/drf-lighten)
+[![Downloads](https://pepy.tech/badge/drf-lighten/month)](https://pepy.tech/project/drf-lighten)
+[![Downloads](https://pepy.tech/badge/drf-lighten/week)](https://pepy.tech/project/drf-lighten)
 
+[TEST](#usage)
 
 DRF Lighten is a Django REST Framework package that lets you modify the structure of your DRF serializer, and nested serializers inside it.
 
 Cool things
 * Select a subset of the data returned per request using query parameters
-* Option to define structure using one query parameter (`?struct`), or two parameters (`?fields=...&exclude`)
+  - e.g., `https://localhost:8000/profiles/?struct={url,picture,-user{email}}`
+* Option to define structure using one query parameter (`?struct=...`), or two parameters (`?fields=...&exclude`)
+  - e.g., `https://localhost:8000/profiles/?struct={url,picture,-user{email}}` or `https://localhost:8000/profiles/?fields=["url", "picture"]&exclude=[{"user": ["email"]}]`
 * Select a subset of the fields using arguments to the serializer, including nested serializers
 * Parser API
   * Decouples schema definition language and schema definition API
@@ -19,6 +25,11 @@ Cool things
   * Dot (e.g., `?fields=id,picture,user.url,user.username`)
   * Custom (Using the Parser API)
 * Nested serializers need not use DRF lighten for their fields to included or excluded
+
+## Requirements
+* Python >= 3.6
+* Django >= 1.11
+* Django REST Framework >= 3.5
 
 
 ## Installation
